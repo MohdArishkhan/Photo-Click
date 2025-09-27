@@ -1,6 +1,6 @@
 const startCameraBtn = document.getElementById("startCamera");
 const captureBtn = document.getElementById("capture");
-const retakeBtn = document.getElementById("retake");
+const deleteBtn = document.getElementById("deleteBtn") || document.getElementById("retake");
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const form = document.getElementById("userForm");
@@ -8,7 +8,6 @@ const submitBtn = document.getElementById("submitBtn");
 const imagesContainer = document.getElementById("imagesContainer");
 const previewOverlay = document.getElementById("imagePreviewOverlay");
 const previewImage = document.getElementById("previewImage");
-const faceStatus = document.getElementById("faceStatus");
 
 
 let imagesArray = [];
@@ -28,18 +27,16 @@ startCameraBtn.onclick = async () => {
     video.srcObject = stream;
     captureBtn.disabled = false;
     video.style.display = "block";
-    retakeBtn.style.display = "none";
-    faceStatus.textContent = '';
   } catch (err) {
     alert("Failed to access camera: " + err.message);
   }
 };
 
 
-// Place Save and Retake buttons below the video/canvas
+// Controls below video/canvas
 const controlsDiv = document.createElement('div');
 controlsDiv.className = 'video-controls';
-controlsDiv.appendChild(retakeBtn);
+controlsDiv.appendChild(deleteBtn);
 let saveBtn = document.getElementById('saveBtn');
 if (!saveBtn) {
   saveBtn = document.createElement('button');
@@ -48,23 +45,17 @@ if (!saveBtn) {
   saveBtn.type = 'button';
 }
 controlsDiv.appendChild(saveBtn);
-
-// Insert controlsDiv after video and canvas
 video.parentNode.insertBefore(controlsDiv, video.nextSibling);
 canvas.parentNode.insertBefore(controlsDiv, canvas.nextSibling);
-
-// Hide controls initially
 controlsDiv.style.display = 'none';
 
-// Ensure status message is always after both video and canvas
+// Status message below camera
 let statusMsg = document.getElementById('statusMessage');
 if (!statusMsg) {
   statusMsg = document.createElement('div');
   statusMsg.id = 'statusMessage';
 }
-// Always insert after canvas (so it's below both video and canvas)
 canvas.parentNode.insertBefore(statusMsg, canvas.nextSibling);
-
 function showStatusMessage(msg, isError = false) {
   statusMsg.textContent = msg;
   statusMsg.className = isError ? 'error' : '';
@@ -74,14 +65,25 @@ function hideStatusMessage() {
   statusMsg.style.display = 'none';
 }
 
-// Simple capture photo (no blur/face check)
+// Enable submit only if all fields and at least 1 image
+function checkFormReady() {
+  const name = form.elements['name'].value.trim();
+  const id = form.elements['id'].value.trim();
+  const bed = form.elements['bed'].value.trim();
+  const hasImage = imagesArray.length > 0;
+  submitBtn.disabled = !(name && id && bed && hasImage);
+}
+form.elements['name'].addEventListener('input', checkFormReady);
+form.elements['id'].addEventListener('input', checkFormReady);
+form.elements['bed'].addEventListener('input', checkFormReady);
+
+// Capture photo
 captureBtn.onclick = () => {
+  hideStatusMessage();
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext("2d");
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  // Show preview of captured image using a real <img> for clarity
   let previewImg = document.getElementById('capturePreviewImg');
   if (!previewImg) {
     previewImg = document.createElement('img');
@@ -97,8 +99,6 @@ captureBtn.onclick = () => {
   previewImg.style.display = 'block';
   video.style.display = 'none';
   canvas.style.display = 'none';
-
-  // Show Delete and Save buttons below
   controlsDiv.style.display = 'flex';
   deleteBtn.style.display = 'inline-block';
   saveBtn.style.display = 'inline-block';
@@ -107,7 +107,6 @@ captureBtn.onclick = () => {
   // Save handler
   saveBtn.onclick = () => {
     imagesArray.push(imageData);
-    // Add to gallery
     const wrapper = document.createElement('div');
     wrapper.className = 'image-wrapper';
     const img = document.createElement('img');
@@ -117,11 +116,11 @@ captureBtn.onclick = () => {
       previewImage.src = img.src;
       previewOverlay.style.display = "flex";
     };
-    const deleteBtn = document.createElement('span');
-    deleteBtn.className = 'delete-icon';
-    deleteBtn.innerHTML = '&times;';
-    deleteBtn.title = 'Delete Image';
-    deleteBtn.onclick = () => {
+    const galleryDeleteBtn = document.createElement('span');
+    galleryDeleteBtn.className = 'delete-icon';
+    galleryDeleteBtn.innerHTML = '&times;';
+    galleryDeleteBtn.title = 'Delete Image';
+    galleryDeleteBtn.onclick = () => {
       const index = imagesArray.indexOf(imageData);
       if (index > -1) {
         imagesArray.splice(index, 1);
@@ -130,9 +129,8 @@ captureBtn.onclick = () => {
       checkFormReady();
     };
     wrapper.appendChild(img);
-    wrapper.appendChild(deleteBtn);
+    wrapper.appendChild(galleryDeleteBtn);
     imagesContainer.appendChild(wrapper);
-    // Reset UI for next capture
     canvas.style.display = 'none';
     video.style.display = 'block';
     controlsDiv.style.display = 'none';
@@ -142,8 +140,8 @@ captureBtn.onclick = () => {
     checkFormReady();
   };
 
-  // Retake handler
-  retakeBtn.onclick = () => {
+  // Delete handler
+  deleteBtn.onclick = () => {
     canvas.style.display = 'none';
     video.style.display = 'block';
     controlsDiv.style.display = 'none';
@@ -151,35 +149,9 @@ captureBtn.onclick = () => {
     previewImg.style.display = 'none';
     hideStatusMessage();
   };
-
-  // Hide the status message when starting a new capture
-  hideStatusMessage();
 };
 
-// Close image preview overlay on click
+// Preview overlay close
 previewOverlay.onclick = () => {
   previewOverlay.style.display = "none";
 };
-
-// Change Retake button to Delete and make it red
-retakeBtn.textContent = 'Delete';
-retakeBtn.id = 'deleteBtn';
-retakeBtn.style.background = '#dc3545';
-retakeBtn.style.color = '#fff';
-
-function checkFormReady() {
-  const name = form.elements['name'].value.trim();
-  const id = form.elements['id'].value.trim();
-  const bed = form.elements['bed'].value.trim();
-  const hasImage = imagesArray.length > 0;
-  if (name && id && bed && hasImage) {
-    submitBtn.disabled = false;
-  } else {
-    submitBtn.disabled = true;
-  }
-}
-
-// Listen for input changes
-form.elements['name'].addEventListener('input', checkFormReady);
-form.elements['id'].addEventListener('input', checkFormReady);
-form.elements['bed'].addEventListener('input', checkFormReady);
