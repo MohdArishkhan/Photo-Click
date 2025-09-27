@@ -12,14 +12,40 @@ const previewImage = document.getElementById("previewImage");
 
 let imagesArray = [];
 let stream;
-let lastImageData = null;
 
 
-// Start camera stream
+// Utility: Show/hide status message
+function showStatusMessage(msg, isError = false) {
+  let statusMsg = document.getElementById('statusMessage');
+  if (!statusMsg) {
+    statusMsg = document.createElement('div');
+    statusMsg.id = 'statusMessage';
+    canvas.parentNode.insertBefore(statusMsg, canvas.nextSibling);
+  }
+  statusMsg.textContent = msg;
+  statusMsg.className = isError ? 'error' : '';
+  statusMsg.style.display = 'block';
+}
+function hideStatusMessage() {
+  const statusMsg = document.getElementById('statusMessage');
+  if (statusMsg) statusMsg.style.display = 'none';
+}
+
+// Enable submit only if all fields are filled and at least 1 image
+function checkFormReady() {
+  const name = form.elements['name'].value.trim();
+  const id = form.elements['id'].value.trim();
+  const bed = form.elements['bed'].value.trim();
+  const hasImage = imagesArray.length > 0;
+  submitBtn.disabled = !(name && id && bed && hasImage);
+}
+['name','id','bed'].forEach(field => form.elements[field].addEventListener('input', checkFormReady));
+
+// Camera start
 startCameraBtn.onclick = async () => {
   try {
     if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
+      stream.getTracks().forEach(track => track.stop());
       video.srcObject = null;
       stream = null;
     }
@@ -31,7 +57,6 @@ startCameraBtn.onclick = async () => {
     alert("Failed to access camera: " + err.message);
   }
 };
-
 
 // Controls below video/canvas
 const controlsDiv = document.createElement('div');
@@ -48,34 +73,6 @@ controlsDiv.appendChild(saveBtn);
 video.parentNode.insertBefore(controlsDiv, video.nextSibling);
 canvas.parentNode.insertBefore(controlsDiv, canvas.nextSibling);
 controlsDiv.style.display = 'none';
-
-// Status message below camera
-let statusMsg = document.getElementById('statusMessage');
-if (!statusMsg) {
-  statusMsg = document.createElement('div');
-  statusMsg.id = 'statusMessage';
-}
-canvas.parentNode.insertBefore(statusMsg, canvas.nextSibling);
-function showStatusMessage(msg, isError = false) {
-  statusMsg.textContent = msg;
-  statusMsg.className = isError ? 'error' : '';
-  statusMsg.style.display = 'block';
-}
-function hideStatusMessage() {
-  statusMsg.style.display = 'none';
-}
-
-// Enable submit only if all fields and at least 1 image
-function checkFormReady() {
-  const name = form.elements['name'].value.trim();
-  const id = form.elements['id'].value.trim();
-  const bed = form.elements['bed'].value.trim();
-  const hasImage = imagesArray.length > 0;
-  submitBtn.disabled = !(name && id && bed && hasImage);
-}
-form.elements['name'].addEventListener('input', checkFormReady);
-form.elements['id'].addEventListener('input', checkFormReady);
-form.elements['bed'].addEventListener('input', checkFormReady);
 
 // Capture photo
 captureBtn.onclick = () => {
@@ -94,7 +91,6 @@ captureBtn.onclick = () => {
     canvas.parentNode.insertBefore(previewImg, canvas.nextSibling);
   }
   const imageData = canvas.toDataURL("image/png");
-  lastImageData = imageData;
   previewImg.src = imageData;
   previewImg.style.display = 'block';
   video.style.display = 'none';
@@ -104,7 +100,6 @@ captureBtn.onclick = () => {
   saveBtn.style.display = 'inline-block';
   captureBtn.style.display = 'none';
 
-  // Save handler
   saveBtn.onclick = () => {
     imagesArray.push(imageData);
     const wrapper = document.createElement('div');
@@ -122,9 +117,7 @@ captureBtn.onclick = () => {
     galleryDeleteBtn.title = 'Delete Image';
     galleryDeleteBtn.onclick = () => {
       const index = imagesArray.indexOf(imageData);
-      if (index > -1) {
-        imagesArray.splice(index, 1);
-      }
+      if (index > -1) imagesArray.splice(index, 1);
       imagesContainer.removeChild(wrapper);
       checkFormReady();
     };
@@ -140,7 +133,6 @@ captureBtn.onclick = () => {
     checkFormReady();
   };
 
-  // Delete handler
   deleteBtn.onclick = () => {
     canvas.style.display = 'none';
     video.style.display = 'block';
@@ -151,7 +143,42 @@ captureBtn.onclick = () => {
   };
 };
 
-// Preview overlay close
 previewOverlay.onclick = () => {
   previewOverlay.style.display = "none";
+};
+
+form.onsubmit = function(e) {
+  const name = form.elements['name'].value.trim();
+  const id = form.elements['id'].value.trim();
+  const bed = form.elements['bed'].value.trim();
+  if (!name) {
+    alert('Please enter your name.');
+    e.preventDefault();
+    return false;
+  }
+  if (isNaN(Number(id))) {
+    alert('Please enter a valid number for ID.');
+    e.preventDefault();
+    return false;
+  }
+  if (bed === '') {
+    alert('Please enter your bed info.');
+    e.preventDefault();
+    return false;
+  }
+  if (!isNaN(Number(name))) {
+    alert('Name should not be a number. Please enter your real name.');
+    e.preventDefault();
+    return false;
+  }
+  // Log all info to console
+  console.log({
+    name,
+    id: Number(id),
+    bed,
+    images: imagesArray
+  });
+  // Prevent actual form submission for demo
+  e.preventDefault();
+  return false;
 };
