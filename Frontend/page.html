@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Camera Capture Form</title>
-  <link rel="stylesheet" href="page.css" />
-</head>
-<body>
-  <h2>User Info with Photo Capture</h2>
-  <form id="userForm">
-    <label>Name: <input type="text" name="name" required /></label><br />
-    <label>ID: <input type="text" name="id" required /></label><br />
-    <label>Bed: <input type="text" name="bed" required /></label><br />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Camera Capture Form</title>
+    <link rel="stylesheet" href="page.css" />
+  </head>
+  <body>
+    <h2>User Info with Photo Capture</h2>
+    <form id="userForm">
+      <label>Name: <input type="text" name="name" required /></label><br />
+      <label>ID: <input type="text" name="id" required /></label><br />
+      <label>Bed: <input type="text" name="bed" required /></label><br />
 
-    <button type="button" id="startCamera">Open Camera</button><br /><br />
+      <button type="button" id="startCamera">Open Camera</button><br /><br />
 
-    <video id="video" autoplay style="display:none; max-width: 100%; border-radius: 8px;"></video><br />
+      <video
+        id="video"
+        autoplay
+        style="display: none; max-width: 100%; border-radius: 8px"
+      ></video
+      ><br />
 
-    <button type="button" id="capture" disabled>Capture Photo</button><br />
 
-    <canvas id="canvas" style="display:none;"></canvas><br />
+  <div id="faceStatus" style="color: #d9534f; margin-bottom: 8px;"></div>
+  <button type="button" id="capture" disabled>Capture Photo</button>
+  <button type="button" id="retake" style="display:none; background:#ffc107; color:#333;">Retake</button><br />
 
-    <button type="submit" id="submitBtn" disabled>Submit</button>
+  <canvas id="canvas" style="display: none"></canvas><br />
+  <canvas id="faceCanvas" style="display:none;"></canvas>
 
-    <!-- Images container where captured images appear below video -->
-    <div id="imagesContainer" class="images-container"></div>
-  </form>
+      <!-- Images container where captured images appear below video -->
+      <div id="imagesContainer" class="images-container"></div>
+      <!-- Optional large image preview overlay -->
+      <div
+        id="imagePreviewOverlay"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        "
+      >
+        <img
+          id="previewImage"
+          src=""
+          style="
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 15px white;
+          "
+        />
+      </div>
+      <button type="submit" id="submitBtn" disabled>Submit</button>
+    </form>
 
-  <!-- Optional large image preview overlay -->
-  <div id="imagePreviewOverlay" style="
-    display:none;
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.8);
-    justify-content:center;
-    align-items:center;
-    z-index: 1000;">
-    <img id="previewImage" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow: 0 0 15px white;" />
-  </div>
-
-  <script src="page.js"></script>
-</body>
+    <script src="page.js"></script>
+  </body>
 </html>
